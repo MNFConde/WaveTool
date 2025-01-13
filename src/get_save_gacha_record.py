@@ -7,6 +7,8 @@ import json
 import settings
 from datetime import datetime
 
+new_record_standard_time = None
+
 class NetWorkError(Exception):
     def __init__(self, code, message):
         self.code = code
@@ -144,18 +146,17 @@ def get_pointed_type_gacha_records(
 def insert_or_update(gacha_id: int, gacha_records: list) -> int:
     gacha_table = settings.gacha_db.table(settings.gacha_type[gacha_id])
     # 从数据库中读取最后一条消息的时间
-    lastest_record: dict | None = gacha_table.get(doc_id = len(gacha_table))
+    
     
     # 从头到位时间由大到小，减轻比对数量，并且后续切片时不会多出一条
-    if lastest_record:
-        lastest_time = datetime.strptime(lastest_record['time'], settings.time_format)
+    if new_record_standard_time:
         
         # 比对传入的 gacha_records 的时间
         for i in range(len(gacha_records)):
             record = gacha_records[i]
             record_time = datetime.strptime(record['time'], settings.time_format)
             
-            if record_time > lastest_time:
+            if record_time > new_record_standard_time:
                 continue
             else:
                 break
@@ -180,6 +181,11 @@ def get_save_all_type_gacha_records(post_para_dict: dict) -> dict:
     '''
     get_records_num = 0
     update_records_num = 0
+    
+    # 在获取记录之前标记，获取记录过程中该值不能更新
+    global new_record_standard_time
+    new_record_standard_time = settings.get_lastest_time()
+    
     for gacha_id, gacha_name in settings.gacha_type.items():
         # post_para_dict['']
         # 一次请求以及三次重试
