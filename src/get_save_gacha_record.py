@@ -151,7 +151,7 @@ def insert_or_update(gacha_id: int, gacha_records: list) -> int:
     
     
     # 从头到尾时间由大到小，减轻比对数量，并且后续切片时不会多出一条
-    if settings.is_gacha_time_init() and gacha_records: # gacha_record 为空时 i 会不存在
+    if not settings.is_gacha_time_init() and gacha_records: # gacha_record 为空时 i 会不存在
         
         # 比对传入的 gacha_records 的时间
         for i in range(len(gacha_records)):
@@ -184,19 +184,23 @@ def get_save_all_type_gacha_records(post_para_dict: dict) -> dict:
     all_get_records_num = 0
     all_update_records_num = 0
     
+    
     for gacha_id, gacha_name in settings.gacha_type.items():
         # post_para_dict['']
         # 一次请求以及三次重试
+        get_records_num = 0
+        update_records_num = 0
         print("正在读取{}卡池".format(gacha_name))
         for _ in range(4):
             gacha_records: list = []
             try:
                 gacha_records = get_pointed_type_gacha_records(gacha_id, post_para_dict)
                 get_records_num = len(gacha_records)
+                all_get_records_num += get_records_num
                 break
             except WaveUrlTimeOut as w: # 把异常抛给更上层
                 raise WaveUrlTimeOut(w.message + str({
-                    "get_records_num"    : all_get_records_num + get_records_num,
+                    "get_records_num"    : all_get_records_num,
                     "update_records_num" : all_update_records_num,
                 }))
             except Exception as e:
@@ -226,14 +230,16 @@ def get_save_all_type_gacha_records(post_para_dict: dict) -> dict:
 def get_save_gacha_main():
     if settings.settings_complete:
         para = get_url_para_from_log()
-        try:
-            return get_save_all_type_gacha_records(para)
-        except WaveUrlTimeOut as e:
-            return e.message
-        except Exception as e:
-            print(str(e))
+        
+        return get_save_all_type_gacha_records(para)
+        # try:
+        #     return get_save_all_type_gacha_records(para)
+        # except WaveUrlTimeOut as e:
+        #     return e.message
+        # except Exception as e:
+        #     return str(e)
     else:
-        print("请先进行设置！")
+        return "请先进行设置！"
 
 if __name__ == "__main__":
     # if not is_admin():

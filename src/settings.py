@@ -3,39 +3,39 @@ from datetime import datetime
 import os
 
 
-gacha_db = TinyDB('./gacha_database.json')
-gacha_records = Query()
+# gacha_db = TinyDB('./gacha_database.json')
+# gacha_records = Query()
 
-file_path = r"D:\game\鸣潮\Wuthering Waves\Wuthering Waves Game\Client\Saved\Logs\Client.log"
-url_api = '''https://gmserver-api.aki-game2.com/gacha/record/query'''
-url_api_2 = '''https://coapi.cn/v1/mc/gacha.php'''
-# save_path = r"D:\software\启动器\log_save.json"
+# file_path = r"D:\game\鸣潮\Wuthering Waves\Wuthering Waves Game\Client\Saved\Logs\Client.log"
+# url_api = '''https://gmserver-api.aki-game2.com/gacha/record/query'''
+# url_api_2 = '''https://coapi.cn/v1/mc/gacha.php'''
+# # save_path = r"D:\software\启动器\log_save.json"
 
-post_header = {
-    "User-Agent": "Mozilla/5.0",
-    "Content-Type": "application/json",
-}
+# post_header = {
+#     "User-Agent": "Mozilla/5.0",
+#     "Content-Type": "application/json",
+# }
 
-gacha_type = {
-    1: "UP角色池",
-    2: "UP武器池",
-    3: "常驻角色池",
-    4: "常驻武器池",
-    5: "新手池",
-    6: "新手自选池",
-    7: "感恩自选池",
-}
+# gacha_type = {
+#     1: "UP角色池",
+#     2: "UP武器池",
+#     3: "常驻角色池",
+#     4: "常驻武器池",
+#     5: "新手池",
+#     6: "新手自选池",
+#     7: "感恩自选池",
+# }
 
-time_format = r'%Y-%m-%d %H:%M:%S'
+# time_format = r'%Y-%m-%d %H:%M:%S'
 
-init_args = {
-    "game_path"  : "",
-    "data_path"  : './',
-    "log_path"   : './log',
-    "cache_path" : './cache',
-    "database_lastest_record_time" : '1970-01-01 00:00:00',
-    "analysis_lastest_record_time" : '1970-01-01 00:00:00',
-}
+# init_args = {
+#     "game_path"  : "",
+#     "data_path"  : './',
+#     "log_path"   : './log',
+#     "cache_path" : './cache',
+#     "database_lastest_record_time" : '1970-01-01 00:00:00',
+#     "analysis_lastest_record_time" : '1970-01-01 00:00:00',
+# }
 
 # 计算文件夹大小
 def get_dir_size(path_str):
@@ -59,7 +59,7 @@ class WaveToolArgs():
     '''
     def __init__(self):
         self.args_json_path = './args.json'
-        self.gacha_db = TinyDB(self.args_json_path)
+        self.args_db = TinyDB(self.args_json_path)
         self.url_api = '''https://gmserver-api.aki-game2.com/gacha/record/query'''
         self.url_api_2 = '''https://coapi.cn/v1/mc/gacha.php'''
         self.post_header = {
@@ -87,13 +87,14 @@ class WaveToolArgs():
             "analysis_lastest_record_time" : '1970-01-01 00:00:00',
         }
         
-        if len(self.gacha_db) == 0:
-            self.gacha_db.insert(init_args)
+        if len(self.args_db) == 0:
+            self.args_db.insert(self.init_args)
         self.set_args_from_database()
     
     def set_args_from_database(self):
-        args_dict = self.gacha_db.get(doc_id = len(self.gacha_db))
+        args_dict = self.args_db.get(doc_id = len(self.args_db))
         self.set_args(args_dict)
+        self.renew_gacha_time()
 
     @property
     def game_log_path(self) -> str:
@@ -119,7 +120,11 @@ class WaveToolArgs():
     
     @property
     def gacha_time(self):
-        return datetime.strptime(self.database_time)
+        return datetime.strptime(self.database_time, self.time_format)
+    
+    @property
+    def gacha_db(self):
+        return TinyDB(self.data_path + 'gacha_database.json')
     
     def is_gacha_time_init(self):
         if self.database_time == self.init_args['database_lastest_record_time']:
@@ -138,11 +143,11 @@ class WaveToolArgs():
                 time_tuple.append(
                     datetime.strptime(
                         table_lastest_time_record['time'], 
-                        time_format,
+                        self.time_format,
                     )
                 )
         if time_tuple:
-            self.database_time = max(time_tuple)
+            self.database_time = datetime.strftime(max(time_tuple), self.time_format)
 
     def set_args(self, args_dict: dict):
         '''
@@ -161,14 +166,8 @@ class WaveToolArgs():
                 self.data_path = args_dict['data_path']
                 self.log_path = args_dict['log_path']
                 self.cache_path = args_dict['cache_path']
-                self.database_time = datetime.strptime(
-                    args_dict['database_lastest_record_time'],
-                    time_format,
-                )
-                self.analysis_time = datetime.strptime(
-                    args_dict['analysis_lastest_record_time'],
-                    time_format,
-                )
+                self.database_time = args_dict['database_lastest_record_time']
+                self.analysis_time = args_dict['analysis_lastest_record_time']
                 break
             except Exception:
                 signal = input("参数损坏或不全，是否重置？[y/n]")
@@ -183,18 +182,18 @@ class WaveToolArgs():
     def fresh_args(self, args_dict: dict):
         # args_dict 并不一定有所有的参数
         for args_name, args_value in args_dict.items():
-            self.gacha_db.update(
+            self.args_db.update(
                 {
                     args_name: args_value
                 }, 
-                doc_ids=[len(self.gacha_db)], 
+                doc_ids=[len(self.args_db)], 
             )
         self.set_args_from_database()
     
     # 重置设置
     def init_args(self):
-        self.gacha_db.truncate()
-        self.gacha_db.insert(init_args)
+        self.args_db.truncate()
+        self.args_db.insert(self.init_args)
         self.set_args_from_database()
         self.renew_gacha_time()
 
