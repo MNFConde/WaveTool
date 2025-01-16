@@ -168,6 +168,10 @@ class WaveToolArgs():
                 self.cache_path = args_dict['cache_path']
                 self.database_time = args_dict['database_lastest_record_time']
                 self.analysis_time = args_dict['analysis_lastest_record_time']
+                # if not os.path.exists(self.log_path):
+                #     os.mkdir(self.log_path)
+                # if not os.path.exists(self.cache_path):
+                #     os.mkdir(self.cache_path)
                 break
             except Exception:
                 signal = input("参数损坏或不全，是否重置？[y/n]")
