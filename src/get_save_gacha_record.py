@@ -4,8 +4,8 @@ import chardet
 import re
 import requests
 import json
-# import settings
-from settings import settings
+import settings_and_function as SF
+from settings_and_function import settings
 from datetime import datetime
 
 new_record_standard_time = None
@@ -189,7 +189,7 @@ def get_save_all_type_gacha_records(post_para_dict: dict) -> dict:
     '''
     all_get_records_num = 0
     all_update_records_num = 0
-    
+    records_list = dict()
     
     for gacha_id, gacha_name in settings.gacha_type.items():
         # post_para_dict['']
@@ -203,12 +203,13 @@ def get_save_all_type_gacha_records(post_para_dict: dict) -> dict:
                 gacha_records = get_pointed_type_gacha_records(gacha_id, post_para_dict)
                 get_records_num = len(gacha_records)
                 all_get_records_num += get_records_num
+                records_list.update({
+                    gacha_name: gacha_records
+                })
+                print("读取{}条".format(get_records_num))
                 break
             except WaveUrlTimeOut as w: # 把异常抛给更上层
-                raise WaveUrlTimeOut(w.message + str({
-                    "get_records_num"    : all_get_records_num,
-                    "update_records_num" : all_update_records_num,
-                }))
+                raise WaveUrlTimeOut(w.message)
             except Exception as e:
                 if _ == '0':
                     print("请求卡池类型【{}】失败，错误信息：{}，开始重试".format(gacha_name, str(e)))
@@ -218,10 +219,19 @@ def get_save_all_type_gacha_records(post_para_dict: dict) -> dict:
         if gacha_records == [] and _ != 0: # 有可能本来某个卡池就没有记录
             # 重试仍然失败，则跳过该类型卡池
             print("重试失败，跳过该类卡池！")
-        
-        # 顺序导入，减轻后续遍历时的条数
-        update_records_num = insert_or_update(gacha_id, gacha_records)
-        print("读取{}条".format(get_records_num))
+    
+    for gacha_name in settings.gacha_type.values():
+        # 按照获取时的逆序来导入，减轻后续遍历时的条数
+        # update_records_num = insert_or_update(gacha_id, gacha_records)
+        update_records_num = SF.sorted_insert_or_update(
+            settings.gacha_db,
+            gacha_name,
+            records_list[gacha_name],
+            settings.gacha_table_time(gacha_name),
+            True,
+            tmp_check,
+        )
+        print("向{}中插入".format(gacha_name))
         print("更新{}条".format(update_records_num))
         all_update_records_num += update_records_num
     
@@ -257,4 +267,5 @@ if __name__ == "__main__":
     # print(type(a[0]))
     # print(a[0])
     print(get_save_gacha_main())
+    # print(SF.calculate_db_len(settings.gacha_db))
 
