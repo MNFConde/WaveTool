@@ -93,12 +93,16 @@ class AnalysisData:
                 )),
                 result_dict[name],
             ))
-            table = db.table(name)
-            table.insert_multiple(insert_analysis_records)
+            # table = db.table(name)
+            # table.insert_multiple(insert_analysis_records)
+            print("缓存了{} 条".format(SF.sorted_insert_or_update(
+                db, 
+                name, 
+                insert_analysis_records, 
+                settings.get_table_time(db, name),
+            )))
         print(SF.calculate_db_len(db))
-            
-        
-    
+
     @staticmethod
     def pity_calculate(doc_list) -> list:
         if type(doc_list) == map:
@@ -150,7 +154,6 @@ class AnalysisData:
 
 
 a = AnalysisData()
-
 a.save_analysis_result(a.analysis_gacha_records())
 
 

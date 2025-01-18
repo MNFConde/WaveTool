@@ -92,8 +92,6 @@ class WaveToolArgs():
     def set_args_from_database(self):
         args_dict = self.args_db.get(doc_id = len(self.args_db))
         self.set_args(args_dict)
-        self.renew_gacha_time()
-        self.renew_analysis_time()
 
     @property
     def game_log_path(self) -> str:
@@ -123,66 +121,73 @@ class WaveToolArgs():
     
     @property
     def gacha_db(self):
-        # return TinyDB(self.data_path + 'gacha_database.json')
-        return TinyDB(self.data_path + 'gacha_database_test.json')
+        # return TinyDB(os.path.join(self.data_path, 'gacha_database.json'))
+        return TinyDB(os.path.join(self.data_path, 'gacha_database_test.json'))
     
     @property
     def analysis_db(self):
-        return TinyDB(self.data_path + 'analysis_result.json')
+        return TinyDB(os.path.join(self.cache_path, 'analysis_result.json'))
     
     # def is_gacha_time_init(self):
     #     if self.database_time == self.init_args['database_lastest_record_time']:
     #         return True
     #     return False
 
-    def renew_gacha_time(self):
-        '''
-        找到所有表中的最新时间，比较之后输出其中最新的那个
-        该函数不利于更加细致的控制
-        '''
-        db = self.gacha_db
-        time_list = []
-        for gacha_name in self.gacha_type.values():
-            gacha_table = db.table(gacha_name)
-            table_lastest_time_record = gacha_table.get(doc_id = len(gacha_table))
-            if table_lastest_time_record:
-                time_list.append(
-                    datetime.strptime(
-                        table_lastest_time_record['time'], 
-                        self.time_format,
-                    )
-                )
-        # if time_list:
-        #     # self.database_time = datetime.strftime(max(time_list), self.time_format)
-        #     self.database_time = max(time_list)
-        self.database_time = max(time_list) if time_list else datetime.strptime(self.time_init_str, self.time_format)
+    # def renew_gacha_time(self):
+    #     '''
+    #     找到所有表中的最新时间，比较之后输出其中最新的那个
+    #     该函数不利于更加细致的控制
+    #     '''
+    #     db = self.gacha_db
+    #     time_list = []
+    #     for gacha_name in self.gacha_type.values():
+    #         gacha_table = db.table(gacha_name)
+    #         table_lastest_time_record = gacha_table.get(doc_id = len(gacha_table))
+    #         if table_lastest_time_record:
+    #             time_list.append(
+    #                 datetime.strptime(
+    #                     table_lastest_time_record['time'], 
+    #                     self.time_format,
+    #                 )
+    #             )
+    #     # if time_list:
+    #     #     # self.database_time = datetime.strftime(max(time_list), self.time_format)
+    #     #     self.database_time = max(time_list)
+    #     self.database_time = max(time_list) if time_list else datetime.strptime(self.time_init_str, self.time_format)
     
-    def gacha_table_time(self, table_name):
-        db = self.gacha_db
+    # def gacha_table_time(self, table_name):
+    #     db = self.gacha_db
+    #     table = db.table(table_name)
+    #     lastest_record = table.get(doc_id = len(table))
+    #     if lastest_record:
+    #         return datetime.strptime(lastest_record['time'], self.time_format)
+    #     return datetime.strptime(self.time_init_str, self.time_format)
+    
+    def get_table_time(self, db, table_name):
         table = db.table(table_name)
         lastest_record = table.get(doc_id = len(table))
         if lastest_record:
             return datetime.strptime(lastest_record['time'], self.time_format)
         return datetime.strptime(self.time_init_str, self.time_format)
 
-    def renew_analysis_time(self):
-        db = self.analysis_db
-        tables_name = self.gacha_type.values()
-        time_list = []
-        for name in tables_name:
-            table = db.table(name)
-            table_lastest_time_record = table.get(doc_id = len(table))
-            if table_lastest_time_record:
-                time_list.append(
-                    datetime.strptime(
-                        table_lastest_time_record['time'],
-                        self.time_format,
-                    )
-                )
-        # if time_list:
-        #     # self.analysis_time = datetime.strftime(max(time_list), self.time_format)
-        #     self.analysis_time = max(time_list)
-        self.analysis_time = max(time_list) if time_list else datetime.strptime(self.time_init_str, self.time_format)
+    # def renew_analysis_time(self):
+    #     db = self.analysis_db
+    #     tables_name = self.gacha_type.values()
+    #     time_list = []
+    #     for name in tables_name:
+    #         table = db.table(name)
+    #         table_lastest_time_record = table.get(doc_id = len(table))
+    #         if table_lastest_time_record:
+    #             time_list.append(
+    #                 datetime.strptime(
+    #                     table_lastest_time_record['time'],
+    #                     self.time_format,
+    #                 )
+    #             )
+    #     # if time_list:
+    #     #     # self.analysis_time = datetime.strftime(max(time_list), self.time_format)
+    #     #     self.analysis_time = max(time_list)
+    #     self.analysis_time = max(time_list) if time_list else datetime.strptime(self.time_init_str, self.time_format)
             
     def set_args(self, args_dict: dict):
         '''
@@ -245,8 +250,6 @@ class WaveToolArgs():
         self.args_db.truncate()
         self.args_db.insert(self.init_args)
         self.set_args_from_database()
-        self.renew_gacha_time()
-        self.renew_analysis_time()
 
 
 
@@ -274,7 +277,7 @@ def sorted_insert_or_update(
         table_name: str, 
         insert_records: list, 
         lastest_time: datetime = None,
-        is_reversed: bool = None,
+        is_reversed: bool = False,
         check_function = None,
     ) -> int:
     '''

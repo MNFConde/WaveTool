@@ -227,7 +227,7 @@ def get_save_all_type_gacha_records(post_para_dict: dict) -> dict:
             settings.gacha_db,
             gacha_name,
             records_list[gacha_name],
-            settings.gacha_table_time(gacha_name),
+            settings.get_table_time(settings.gacha_db, gacha_name),
             True,
             tmp_check,
         )
