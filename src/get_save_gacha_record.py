@@ -147,7 +147,6 @@ def get_pointed_type_gacha_records(
 
 def insert_or_update(gacha_id: int, gacha_records: list) -> int:
     gacha_table = settings.gacha_db.table(settings.gacha_type[gacha_id])
-    # 从数据库中读取最后一条消息的时间
     
     
     # 从头到尾时间由大到小，减轻比对数量，并且后续切片时不会多出一条
@@ -170,12 +169,19 @@ def insert_or_update(gacha_id: int, gacha_records: list) -> int:
     # 记录新插入的数据条数
     new_records_num = len(insert_list)
     
+    # cardPoolType 可能会出现数字，所以要筛查一下
+    # 后续可能会在这里添加更加全面的筛查
+    insert_list = list(map(tmp_check, insert_list))
+    
     # 批量插入切片
     gacha_table.insert_multiple(insert_list[::-1])
     
     return new_records_num
 
-
+def tmp_check(i):
+    if i['cardPoolType'] == '6':
+        i['cardPoolType'] = settings.gacha_type[int(i['cardPoolType'])]
+    return i
 
 def get_save_all_type_gacha_records(post_para_dict: dict) -> dict:
     '''
