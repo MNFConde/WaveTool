@@ -70,9 +70,9 @@ class WaveToolArgs():
         
         self.init_args = {
             "game_path"  : "",
-            "data_path"  : './',
-            "log_path"   : './log',
-            "cache_path" : './cache',
+            "data_path"  : os.path.abspath('./'),
+            "log_path"   : os.path.abspath('./log'),
+            "cache_path" : os.path.abspath('./cache'),
             # "database_lastest_record_time" : '1970-01-01 00:00:00',
             # "analysis_lastest_record_time" : '1970-01-01 00:00:00',
         }
@@ -325,6 +325,6 @@ def sorted_insert_or_update(
 
 settings = WaveToolArgs()
 settings.game_path = r"D:\game\鸣潮\Wuthering Waves"
-# settings.init_args()
+# settings.initial_args()
 # print(settings.database_time)
 # a.set_args_from_database()
