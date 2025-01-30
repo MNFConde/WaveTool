@@ -1,11 +1,10 @@
 import streamlit as st
-import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, Tk
 from settings_and_function import settings
 import pandas as pd
 
 # Set up tkinter
-root = tk.Tk()
+root = Tk()
 root.withdraw()
 # Make folder picker dialog appear on top of other windows
 root.wm_attributes('-topmost', 1)
@@ -53,7 +52,6 @@ def gacha_records_show():
         page = pages[i - 1]
         with page:
             t = settings.analysis_db.table(gacha_name)
-            print(t.all())
             df = pd.DataFrame(t.all())
             st.dataframe(
                 df, 
@@ -98,6 +96,12 @@ def app_page():
         path_set('数据存放目录', 'data_path')
         path_set('日志存放目录', 'log_path')
         path_set('缓存存放目录', 'cache_path')
+        color = st.color_picker("选择配色")
+        # print(color)
+        
         
 if __name__ == "__main__":
+    # color = st.get_option("theme.primaryColor")
+    # print(color)
+    st.set_option("client.toolbarMode", "auto")
     app_page()
