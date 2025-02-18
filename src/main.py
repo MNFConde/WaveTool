@@ -19,28 +19,27 @@ def path_set(label_name: str, segment_name: str, note: str = '', init_path: str 
     st.write(note)
     
     dirname_selected = None
-    dirname = ''
     col1, col2 = st.columns([4, 1])
     empty_text = col1.empty()
     empty_text.text_input(
-        '', 
-        st.session_state[segment_name], 
+        label='', 
+        value=st.session_state[segment_name], 
         label_visibility='collapsed', 
         autocomplete='on',
-        key=segment_name + 'input' 'a',
+        key=segment_name + 'input' + 'a',
     )
     choice = col2.button('浏览文件', key=segment_name + 'button' + 'a')
     if choice:
         dirname_selected = filedialog.askdirectory(master=root)
-    dirname = dirname_selected if dirname_selected else dirname
-    dirname = empty_text.text_input(
-        '', 
-        dirname, 
+    if dirname_selected:
+        st.session_state[segment_name] = dirname_selected
+    empty_text.text_input(
+        label='', 
+        value=st.session_state[segment_name], 
         label_visibility='collapsed', 
         autocomplete='on',
-        key=segment_name + 'input' + 'b'
+        key=segment_name + 'input' + 'b',
     )
-    st.session_state[segment_name] = dirname
     st.write(st.session_state[segment_name])
 
 @st.cache_data
@@ -78,6 +77,16 @@ def gacha_records_show():
                 use_container_width=True,
                 hide_index=True)
 
+def data_summary():
+    st.markdown("#### 汇总")
+    '''
+    抽卡数据统计：
+        一共多少抽、5星多少个、四星多少个
+        5星出货率、四星出货率
+        
+    '''
+    return
+
 def app_page():
     tab1, tab2 = st.tabs(["抽卡记录", "设置"])
     with tab1:
@@ -92,11 +101,11 @@ def app_page():
     with tab2:
         st.header("设置")
         st.write("")
-        path_set('游戏目录', 'game_path', '找到安装目录下的 Wuthering Waves 文件夹')
-        path_set('数据存放目录', 'data_path')
-        path_set('日志存放目录', 'log_path')
-        path_set('缓存存放目录', 'cache_path')
-        color = st.color_picker("选择配色")
+        path_set('游戏目录', 'game_path', '找到安装目录下的 Wuthering Waves 文件夹', init_path=settings.game_path)
+        path_set('数据存放目录', 'data_path', init_path=settings.data_path)
+        path_set('日志存放目录', 'log_path', init_path=settings.game_log_path)
+        path_set('缓存存放目录', 'cache_path', init_path=settings.cache_path)
+        # color = st.color_picker("选择配色")
         # print(color)
         
         
