@@ -112,7 +112,9 @@ class AnalysisData:
         doc_list[0].append(doc_list[0][1])
         result = [doc_list[0]]
         for ind, doc in enumerate(doc_list[1:], start=1):
-            doc.append(doc[1] - doc_list[ind - 1][1])
+            pity_num = doc[1] - doc_list[ind - 1][1]
+            if pity_num != 0:
+                doc.append(pity_num)
             result.append(doc)
             
         return result
@@ -154,6 +156,7 @@ class AnalysisData:
 
 
 a = AnalysisData()
+# pprint(a.analysis_gacha_records())
 a.save_analysis_result(a.analysis_gacha_records())
 
 

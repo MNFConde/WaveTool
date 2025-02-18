@@ -76,15 +76,19 @@ def gacha_records_show():
                 },
                 use_container_width=True,
                 hide_index=True)
-
 def data_summary():
     st.markdown("#### 汇总")
     '''
     抽卡数据统计：
-        一共多少抽、5星多少个、四星多少个
-        5星出货率、四星出货率
+        1. 总体评价
+            总体抽数，5星出货率，四星出货率，欧非评价
+        2. 饼图：
+            依据不同的池子的占比，其中在不同的池子中划分5星和四星，
+        3. 柱状图：
+            依据不同的时间进行分割（天，月，年）来对比抽数
         
     '''
+    
     return
 
 def app_page():
