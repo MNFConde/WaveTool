@@ -45,46 +45,55 @@ class AnalysisData:
         # 下面这里要加上 create_dirs = True，用来保证文件所在的文件夹一定会存在
         self.analysis_db = TinyDB(self.analysis_db_path, create_dirs = True)
         
-    def analysis_gacha_records(self, time_limit_tuple: tuple = (None, None)):
+    def analysis_gacha_records(self, levels_list: list = [4, 5], time_limit_tuple: tuple = (None, None)):
         db_tables_name = settings.gacha_db.tables()
-        search_list = [
-            settings.gacha_db.table(table_name).search(
-                (
-                    (Query().qualityLevel == 5) 
-                    | (Query().qualityLevel == 4)
+        search_list_sum = 0
+        db_analysis_dict = dict()
+        for level in levels_list:
+            # search_list = [
+            #     settings.gacha_db.table(table_name).search(
+            #         (
+            #             (Query().qualityLevel == level) 
+            #         )
+            #         & Query().time.test(self.time_func(time_limit_tuple))
+            #     ) for table_name in db_tables_name
+            # ]
+            search_list= [self.search_extend(level, table_name, time_limit_tuple) for table_name in db_tables_name]
+            search_list_sum += sum(list(map(lambda i: len(i), search_list)))
+            db_analysis_dict.update(
+                dict(
+                    zip(
+                        map(
+                            lambda i: i + '_lv' + str(level),
+                            db_tables_name,
+                        ),
+                        [
+                            list(
+                                self.pity_calculate(
+                                    map(
+                                        lambda i: [
+                                            i['name'], 
+                                            i.doc_id, 
+                                            i['qualityLevel'], 
+                                            i['resourceType'],
+                                            i['time']
+                                        ], 
+                                        doc_list,
+                                    )
+                                )
+                            ) for doc_list in search_list
+                        ]
+                    )
                 )
-                & Query().time.test(self.time_func(time_limit_tuple))
-            ) for table_name in db_tables_name
-        ]
-        search_list = [self.search_extend(table_name, time_limit_tuple) for table_name in db_tables_name]
-        search_list_sum = sum(list(map(lambda i: len(i), search_list)))
-        db_analysis_dict = dict(
-            zip(
-                db_tables_name, [
-                    list(
-                        self.pity_calculate(
-                            map(
-                                lambda i: [
-                                    i['name'], 
-                                    i.doc_id, 
-                                    i['qualityLevel'], 
-                                    i['resourceType'],
-                                    i['time']
-                                ], 
-                                doc_list,
-                            )
-                        )
-                    ) for doc_list in search_list
-                ]
             )
-        )
         print(search_list_sum)
         return (db_analysis_dict)
         
     
     def save_analysis_result(self, result_dict):
         db = settings.analysis_db
-        tables_name = settings.gacha_type.values()
+        # 之后的存储以传进来的字典的 key 为准
+        tables_name = result_dict.keys()
         for name in tables_name:
             insert_analysis_records = list(map(
                 lambda i: dict(zip(
@@ -113,21 +122,22 @@ class AnalysisData:
         result = [doc_list[0]]
         for ind, doc in enumerate(doc_list[1:], start=1):
             pity_num = doc[1] - doc_list[ind - 1][1]
-            if pity_num != 0:
-                doc.append(pity_num)
+            # if pity_num != 0:
+            #     doc.append(pity_num)
             result.append(doc)
-            
-        return result
+        
+        # 这里处理最后一条记录的情况，无论记录是什么，都是多出来辅助计算垫抽数的，所以要修改记录为已垫
+        result[-1][:4] == ['已垫', '-', '-', '-']
+        return result    
     
-    def search_extend(self, table_name: str, time_limit_tuple: tuple) -> list:
+    def search_extend(self, level: int, table_name: str, time_limit_tuple: tuple) -> list:
         '''
         为了规避TinyDB不能在查询时使用 doc_id 的问题
         '''
         focus_table = settings.gacha_db.table(table_name)
         search_docs = focus_table.search(
             (
-                (Query().qualityLevel == 5) 
-                | (Query().qualityLevel == 4)
+                (Query().qualityLevel == level) 
             )
             & Query().time.test(self.time_func(time_limit_tuple))
         )
@@ -156,7 +166,7 @@ class AnalysisData:
 
 
 a = AnalysisData()
-# pprint(a.analysis_gacha_records())
-a.save_analysis_result(a.analysis_gacha_records())
+pprint(a.analysis_gacha_records())
+# a.save_analysis_result(a.analysis_gacha_records())
 
 
