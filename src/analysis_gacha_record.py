@@ -122,12 +122,11 @@ class AnalysisData:
         result = [doc_list[0]]
         for ind, doc in enumerate(doc_list[1:], start=1):
             pity_num = doc[1] - doc_list[ind - 1][1]
-            # if pity_num != 0:
-            #     doc.append(pity_num)
+            doc.append(pity_num)
             result.append(doc)
         
         # 这里处理最后一条记录的情况，无论记录是什么，都是多出来辅助计算垫抽数的，所以要修改记录为已垫
-        result[-1][:4] == ['已垫', '-', '-', '-']
+        result[-1][:4] = ['已垫', '-', '-', '-']
         return result    
     
     def search_extend(self, level: int, table_name: str, time_limit_tuple: tuple) -> list:
@@ -166,7 +165,7 @@ class AnalysisData:
 
 
 a = AnalysisData()
-pprint(a.analysis_gacha_records())
-# a.save_analysis_result(a.analysis_gacha_records())
+# pprint(a.analysis_gacha_records())
+a.save_analysis_result(a.analysis_gacha_records())
 
 
