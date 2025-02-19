@@ -50,21 +50,13 @@ class AnalysisData:
         search_list_sum = 0
         db_analysis_dict = dict()
         for level in levels_list:
-            # search_list = [
-            #     settings.gacha_db.table(table_name).search(
-            #         (
-            #             (Query().qualityLevel == level) 
-            #         )
-            #         & Query().time.test(self.time_func(time_limit_tuple))
-            #     ) for table_name in db_tables_name
-            # ]
             search_list= [self.search_extend(level, table_name, time_limit_tuple) for table_name in db_tables_name]
             search_list_sum += sum(list(map(lambda i: len(i), search_list)))
             db_analysis_dict.update(
                 dict(
                     zip(
                         map(
-                            lambda i: i + '_lv' + str(level),
+                            lambda i: self.data_to_analysis_name_trans(i, level),
                             db_tables_name,
                         ),
                         [
@@ -73,7 +65,7 @@ class AnalysisData:
                                     map(
                                         lambda i: [
                                             i['name'], 
-                                            i.doc_id, 
+                                            i.doc_id,   # 在这里将 doc_id 提出来
                                             i['qualityLevel'], 
                                             i['resourceType'],
                                             i['time']
@@ -88,12 +80,13 @@ class AnalysisData:
             )
         print(search_list_sum)
         return (db_analysis_dict)
-        
-    
+
     def save_analysis_result(self, result_dict):
-        db = settings.analysis_db
+        # db = settings.analysis_db
+        db = self.analysis_db
         # 之后的存储以传进来的字典的 key 为准
         tables_name = result_dict.keys()
+        print("一共有 {} 个表".format(len(tables_name)))
         for name in tables_name:
             insert_analysis_records = list(map(
                 lambda i: dict(zip(
@@ -102,8 +95,7 @@ class AnalysisData:
                 )),
                 result_dict[name],
             ))
-            # table = db.table(name)
-            # table.insert_multiple(insert_analysis_records)
+            self.remove_yidian_record(db, name)
             print("缓存了{} 条".format(SF.sorted_insert_or_update(
                 db, 
                 name, 
@@ -129,17 +121,42 @@ class AnalysisData:
         result[-1][:4] = ['已垫', '-', '-', '-']
         return result    
     
-    def search_extend(self, level: int, table_name: str, time_limit_tuple: tuple) -> list:
+    @staticmethod
+    def data_to_analysis_name_trans(data_table_name: str, level: int):
+        return data_table_name + '_lv' + str(level)
+    
+    @staticmethod
+    def remove_yidian_record(database, table_name):
         '''
-        为了规避TinyDB不能在查询时使用 doc_id 的问题
+        去除数据库中的已垫记录（最后一条）
         '''
-        focus_table = settings.gacha_db.table(table_name)
+        table = database.table(table_name)
+        if len(table) != 0:
+            table.remove(doc_ids=[len(table)])
+    
+    def search_extend(self, level: int, data_table_name: str, time_limit_tuple: tuple) -> list:
+        '''
+        在最后额外加入最新的记录，以便后续的处理计算
+        加入判断功能（doc_id），使得其可以读取已有的处理结果而不必反复处理
+        '''
+        # 查询符合要求的记录
+        focus_table = settings.gacha_db.table(data_table_name)
         search_docs = focus_table.search(
             (
                 (Query().qualityLevel == level) 
             )
             & Query().time.test(self.time_func(time_limit_tuple))
         )
+        
+        # 获取之前的分析结果的倒数第二个记录的 doc_id
+        analysis_table_name = self.data_to_analysis_name_trans(data_table_name, level)
+        if analysis_table_name in self.analysis_db.tables():
+            analysis_target_table = self.analysis_db.table(analysis_table_name)
+            exist_second_last_doc = analysis_target_table.get(doc_id = len(analysis_target_table) - 1)
+            exist_second_last_doc_id = exist_second_last_doc['doc_id'] if exist_second_last_doc else 0
+        else:
+            exist_second_last_doc_id = 0
+        search_docs = [i for i in search_docs if i.doc_id > exist_second_last_doc_id]
         last_doc = focus_table.get(doc_id=len(focus_table))
         search_docs.append(last_doc) if last_doc else 1
         return search_docs
