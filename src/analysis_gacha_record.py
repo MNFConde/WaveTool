@@ -50,36 +50,42 @@ class AnalysisData:
         search_list_sum = 0
         db_analysis_dict = dict()
         for level in levels_list:
-            search_list= [self.search_extend(level, table_name, time_limit_tuple) for table_name in db_tables_name]
-            search_list_sum += sum(list(map(lambda i: len(i), search_list)))
-            db_analysis_dict.update(
-                dict(
-                    zip(
-                        map(
-                            lambda i: self.data_to_analysis_name_trans(i, level),
-                            db_tables_name,
-                        ),
-                        [
-                            list(
-                                self.pity_calculate(
-                                    map(
-                                        lambda i: [
-                                            i['name'], 
-                                            i.doc_id,   # 在这里将 doc_id 提出来
-                                            i['qualityLevel'], 
-                                            i['resourceType'],
-                                            i['time']
-                                        ], 
-                                        doc_list,
-                                    )
-                                )
-                            ) for doc_list in search_list
-                        ]
-                    )
-                )
-            )
+            
+            # 扩展搜索，在搜索的时候完成抽数计算与文档项过滤
+            # search_list= [self.search_extend(level, table_name, time_limit_tuple) for table_name in db_tables_name]
+            search_doc_dict= {
+                self.data_to_analysis_name_trans(table_name, level): self.search_extend(level, table_name, time_limit_tuple) for table_name in db_tables_name}
+            # search_list_sum += sum(list(map(lambda i: len(i), search_list)))
+            search_list_sum += sum(list(map(lambda i: len(i), search_doc_dict.values())))
+            db_analysis_dict.update(search_doc_dict)
+            # db_analysis_dict.update(
+            #     dict(
+            #         zip(
+            #             map(
+            #                 lambda i: self.data_to_analysis_name_trans(i, level),
+            #                 db_tables_name,
+            #             ),
+            #             [
+            #                 list(
+            #                     self.pity_calculate(
+            #                         map(
+            #                             lambda i: [
+            #                                 i['name'], 
+            #                                 i.doc_id,   # 在这里将 doc_id 提出来
+            #                                 i['qualityLevel'], 
+            #                                 i['resourceType'],
+            #                                 i['time']
+            #                             ], 
+            #                             doc_list,
+            #                         )
+            #                     )
+            #                 ) for doc_list in search_list
+            #             ]
+            #         )
+            #     )
+            # )
         print(search_list_sum)
-        return (db_analysis_dict)
+        return db_analysis_dict
 
     def save_analysis_result(self, result_dict):
         # db = settings.analysis_db
@@ -88,13 +94,14 @@ class AnalysisData:
         tables_name = result_dict.keys()
         print("一共有 {} 个表".format(len(tables_name)))
         for name in tables_name:
-            insert_analysis_records = list(map(
-                lambda i: dict(zip(
-                    ['name', 'doc_id', 'qualityLevel', 'resourceType', 'time', 'pity_num'],
-                    i,
-                )),
-                result_dict[name],
-            ))
+            # insert_analysis_records = list(map(
+            #     lambda i: dict(zip(
+            #         ['name', 'doc_id', 'qualityLevel', 'resourceType', 'time', 'pity_num'],
+            #         i,
+            #     )),
+            #     result_dict[name],
+            # ))
+            insert_analysis_records = result_dict[name]
             self.remove_yidian_record(db, name)
             print("缓存了{} 条".format(SF.sorted_insert_or_update(
                 db, 
@@ -122,6 +129,39 @@ class AnalysisData:
         return result    
     
     @staticmethod
+    def pity_calculate_dict(doc_list: list) -> list:
+        '''
+        doc_list: list[TinyDBDocument]
+        '''
+        dict_keys = ('name', 'doc_id', 'qualityLevel', 'resourceType')
+        dict_values = ('已垫', '-', '-', '-')
+        
+        if type(doc_list) == map:
+            doc_list = list(doc_list)
+        
+        if len(doc_list) < 2:
+            if len(doc_list) == 1:
+                for i in range(4):
+                    doc_list[-1][dict_keys[i]] = dict_values[i]
+            return doc_list
+        
+        doc_list[0]['pity_num'] = doc_list[0].doc_id
+        doc_list[0]['doc_id'] = doc_list[0].doc_id
+        result = [doc_list[0]]
+        for ind, doc in enumerate(doc_list[1:], start=1):
+            pity_num = doc.doc_id - doc_list[ind - 1].doc_id
+            doc['pity_num'] = pity_num
+            doc['doc_id'] = doc.doc_id
+            result.append(doc)
+        
+        # 这里处理最后一条记录的情况，无论记录是什么，都是多出来辅助计算垫抽数的，所以要修改记录为已垫
+        
+        for i in range(4):
+            result[-1][dict_keys[i]] = dict_values[i]
+        
+        return result    
+    
+    @staticmethod
     def data_to_analysis_name_trans(data_table_name: str, level: int):
         return data_table_name + '_lv' + str(level)
     
@@ -138,10 +178,13 @@ class AnalysisData:
         '''
         在最后额外加入最新的记录，以便后续的处理计算
         加入判断功能（doc_id），使得其可以读取已有的处理结果而不必反复处理
+        加入抽数计算部分
+        加入文档项过滤部分
+        -> list[dict{'name', 'doc_id', 'qualityLevel', 'resourceType', 'time', 'pity_num'}]
         '''
-        # 查询符合要求的记录
+        # 查询符合等级要求的记录
         focus_table = settings.gacha_db.table(data_table_name)
-        search_docs = focus_table.search(
+        search_docs_list = focus_table.search(
             (
                 (Query().qualityLevel == level) 
             )
@@ -156,10 +199,35 @@ class AnalysisData:
             exist_second_last_doc_id = exist_second_last_doc['doc_id'] if exist_second_last_doc else 0
         else:
             exist_second_last_doc_id = 0
-        search_docs = [i for i in search_docs if i.doc_id > exist_second_last_doc_id]
+        search_docs_list = [i for i in search_docs_list if i.doc_id > exist_second_last_doc_id]
         last_doc = focus_table.get(doc_id=len(focus_table))
-        search_docs.append(last_doc) if last_doc else 1
-        return search_docs
+        
+        # 直接在这一步就进行抽数计算
+        # 如果 search_docs_list 为空，抽数计算需要特别处理
+        '''
+        00: {'cardPoolType': '武器精准调谐', 'resourceId': 21020024, 'qualityLevel': 4, 'resourceType': '武器', 'name': '行进序曲', 'count': 1, 'time': '2024-07-27 15:56:59'}
+        '''
+        # last_doc 存在：可能有记录更新也可能没有，所以search_docs_list可能存在可能不存在
+        # last_doc 不存在：之前没有进行过分析，一定存在 search_docs_list 
+        if last_doc:
+            if not search_docs_list:
+                last_doc['pity_num'] = last_doc.doc_id - exist_second_last_doc_id
+                last_doc['doc_id'] = last_doc.doc_id
+                search_docs_list.append(last_doc)
+            else:
+                search_docs_list.append(last_doc)
+        
+        search_docs_list = self.pity_calculate_dict(search_docs_list)
+        needed_values = ('name', 'doc_id', 'qualityLevel', 'resourceType', 'time', 'pity_num')
+        
+        # 过滤出需要的项
+        search_docs_list = list(
+            map(
+                lambda i: {doc_key: doc_value for doc_key, doc_value in i.items() if doc_key in needed_values},
+                search_docs_list
+            )
+        )
+        return search_docs_list
     
     @staticmethod
     def time_func(time_limit_tuple):
