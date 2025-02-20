@@ -121,8 +121,8 @@ class WaveToolArgs():
     
     @property
     def gacha_db(self):
-        # return TinyDB(os.path.join(self.data_path, 'gacha_database.json'))
-        return TinyDB(os.path.join(self.data_path, 'gacha_database_test.json'))
+        return TinyDB(os.path.join(self.data_path, 'gacha_database.json'))
+        # return TinyDB(os.path.join(self.data_path, 'gacha_database_test.json'))
     
     @property
     def analysis_db(self):
