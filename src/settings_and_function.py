@@ -272,7 +272,7 @@ def calculate_db_len(db):
     return sum
 
 # 按照时间来排除哪些文档不该插入
-def sorted_insert_or_update(
+def sorted_insert_or_update_with_time(
         db,
         table_name: str, 
         insert_records: list, 

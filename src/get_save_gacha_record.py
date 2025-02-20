@@ -223,7 +223,7 @@ def get_save_all_type_gacha_records(post_para_dict: dict) -> dict:
     for gacha_name in settings.gacha_type.values():
         # 按照获取时的逆序来导入，减轻后续遍历时的条数
         # update_records_num = insert_or_update(gacha_id, gacha_records)
-        update_records_num = SF.sorted_insert_or_update(
+        update_records_num = SF.sorted_insert_or_update_with_time(
             settings.gacha_db,
             gacha_name,
             records_list[gacha_name],

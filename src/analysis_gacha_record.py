@@ -103,12 +103,15 @@ class AnalysisData:
             # ))
             insert_analysis_records = result_dict[name]
             self.remove_yidian_record(db, name)
-            print("缓存了{} 条".format(SF.sorted_insert_or_update(
-                db, 
-                name, 
-                insert_analysis_records, 
-                settings.get_table_time(db, name),
-            )))
+            # print("缓存了{} 条".format(SF.sorted_insert_or_update(
+            #     db, 
+            #     name, 
+            #     insert_analysis_records, 
+            #     settings.get_table_time(db, name),
+            # )))
+            table = db.table(name)
+            print(table.insert_multiple(insert_analysis_records))
+            print(len(insert_analysis_records))
         print(SF.calculate_db_len(db))
 
     @staticmethod
