@@ -1,6 +1,7 @@
 import streamlit as st
 from tkinter import filedialog, Tk
 from settings_and_function import settings
+import settings_and_function as SF
 import pandas as pd
 
 # Set up tkinter
@@ -50,32 +51,43 @@ def gacha_records_show():
         gacha_name = settings.gacha_type[i]
         page = pages[i - 1]
         with page:
-            t = settings.analysis_db.table(gacha_name)
-            df = pd.DataFrame(t.all())
-            st.dataframe(
-                df, 
-                column_order=[
-                    'time',
-                    'name',
-                    'qualityLevel',
-                    'resourceType',
-                    'pity_num',
-                ],
-                column_config={
-                    'time': st.column_config.Column(
-                        label='日期',
-                        width="small"
-                    ),
-                    'name': st.column_config.Column(
-                        label='名称',
-                        width="small"
-                    ),
-                    'qualityLevel': '星级',
-                    'resourceType': '类型',
-                    'pity_num': '抽数',
-                },
-                use_container_width=True,
-                hide_index=True)
+            levels = (5, 4)
+            level_pages = st.tabs(['五星', '四星'])
+            for i in range(2):
+                level_page = level_pages[i]
+                level = levels[i]
+                with level_page:
+                    # t = settings.analysis_db.table(gacha_name)
+                    t = settings.analysis_db.table(
+                        SF.data_to_analysis_name_trans(gacha_name, level)
+                    )
+                    df = pd.DataFrame(t.all()[::-1])
+                    st.dataframe(
+                        df, 
+                        column_order=[
+                            'time',
+                            'name',
+                            # 'qualityLevel',
+                            'resourceType',
+                            'pity_num',
+                        ],
+                        column_config={
+                            'time': st.column_config.Column(
+                                label='日期',
+                                width="small"
+                            ),
+                            'name': st.column_config.Column(
+                                label='名称',
+                                width="small"
+                            ),
+                            # 'qualityLevel': '星级',
+                            'resourceType': '类型',
+                            'pity_num': '抽数',
+                        },
+                        use_container_width=True,
+                        hide_index=True
+                    )
+
 def data_summary():
     st.markdown("#### 汇总")
     '''

@@ -126,7 +126,7 @@ class WaveToolArgs():
     
     @property
     def analysis_db(self):
-        return TinyDB(os.path.join(self.cache_path, 'analysis_result.json'))
+        return TinyDB(os.path.join(self.cache_path, 'analysis_cache', 'analysis_result.json'))
     
     # def is_gacha_time_init(self):
     #     if self.database_time == self.init_args['database_lastest_record_time']:
