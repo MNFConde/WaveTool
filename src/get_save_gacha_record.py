@@ -235,9 +235,6 @@ def get_save_all_type_gacha_records(post_para_dict: dict) -> dict:
         print("更新{}条".format(update_records_num))
         all_update_records_num += update_records_num
     
-    # 该值只在获取记录后更新
-    settings.renew_gacha_time()
-    
     return {
         "get_records_num"    : all_get_records_num,
         "update_records_num" : all_update_records_num,

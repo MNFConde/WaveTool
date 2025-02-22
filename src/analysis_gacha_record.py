@@ -54,7 +54,7 @@ class AnalysisData:
             # 扩展搜索，在搜索的时候完成抽数计算与文档项过滤
             # search_list= [self.search_extend(level, table_name, time_limit_tuple) for table_name in db_tables_name]
             search_doc_dict= {
-                self.data_to_analysis_name_trans(table_name, level): self.search_extend(level, table_name, time_limit_tuple) for table_name in db_tables_name}
+                SF.data_to_analysis_name_trans(table_name, level): self.search_extend(level, table_name, time_limit_tuple) for table_name in db_tables_name}
             # search_list_sum += sum(list(map(lambda i: len(i), search_list)))
             search_list_sum += sum(list(map(lambda i: len(i), search_doc_dict.values())))
             db_analysis_dict.update(search_doc_dict)
@@ -102,7 +102,7 @@ class AnalysisData:
             #     result_dict[name],
             # ))
             insert_analysis_records = result_dict[name]
-            self.remove_yidian_record(db, name)
+            last_pity_num, last_doc_id = self.remove_yidian_record(db, name)
             # print("缓存了{} 条".format(SF.sorted_insert_or_update(
             #     db, 
             #     name, 
@@ -110,8 +110,15 @@ class AnalysisData:
             #     settings.get_table_time(db, name),
             # )))
             table = db.table(name)
+            new_pity_num = insert_analysis_records[-1]['pity_num']
+            new_doc_id = insert_analysis_records[-1]['doc_id']
             print(table.insert_multiple(insert_analysis_records))
-            print(len(insert_analysis_records))
+            print("表名：{}".format(name))
+            print("缓存了{} 条".format(len(insert_analysis_records)))
+            try:
+                print("已垫： {} 抽 --> {} 抽，增加 {} 抽".format(last_pity_num, new_pity_num, new_doc_id - last_doc_id))
+            except:
+                print("已垫： {} 抽 --> {} 抽，增加 {} 抽".format(last_pity_num, new_pity_num, '??'))
         print(SF.calculate_db_len(db))
 
     @staticmethod
@@ -136,15 +143,15 @@ class AnalysisData:
         '''
         doc_list: list[TinyDBDocument]
         '''
-        dict_keys = ('name', 'doc_id', 'qualityLevel', 'resourceType')
-        dict_values = ('已垫', '-', '-', '-')
+        dict_keys = ('name', 'qualityLevel', 'resourceType')
+        dict_values = ('已垫', '-', '-')
         
         if type(doc_list) == map:
             doc_list = list(doc_list)
         
         if len(doc_list) < 2:
             if len(doc_list) == 1:
-                for i in range(4):
+                for i in range(len(dict_keys)):
                     doc_list[-1][dict_keys[i]] = dict_values[i]
             return doc_list
         
@@ -159,23 +166,26 @@ class AnalysisData:
         
         # 这里处理最后一条记录的情况，无论记录是什么，都是多出来辅助计算垫抽数的，所以要修改记录为已垫
         
-        for i in range(4):
+        for i in range(len(dict_keys)):
             result[-1][dict_keys[i]] = dict_values[i]
         
         return result    
     
     @staticmethod
-    def data_to_analysis_name_trans(data_table_name: str, level: int):
-        return data_table_name + '_lv' + str(level)
-    
-    @staticmethod
-    def remove_yidian_record(database, table_name):
+    def remove_yidian_record(database, table_name) -> tuple:
         '''
         去除数据库中的已垫记录（最后一条）
+        -> (data_pity_num, data_doc_id)
         '''
         table = database.table(table_name)
+        data_pity_num = 0
+        data_doc_id = 0
         if len(table) != 0:
+            data_pity_num = table.get(doc_id = len(table))["pity_num"]
+            data_doc_id = table.get(doc_id = len(table))["doc_id"]
             table.remove(doc_ids=[len(table)])
+        
+        return (data_pity_num, data_doc_id)
     
     def search_extend(self, level: int, data_table_name: str, time_limit_tuple: tuple) -> list:
         '''
@@ -195,7 +205,7 @@ class AnalysisData:
         )
         
         # 获取之前的分析结果的倒数第二个记录的 doc_id
-        analysis_table_name = self.data_to_analysis_name_trans(data_table_name, level)
+        analysis_table_name = SF.data_to_analysis_name_trans(data_table_name, level)
         if analysis_table_name in self.analysis_db.tables():
             analysis_target_table = self.analysis_db.table(analysis_table_name)
             exist_second_last_doc = analysis_target_table.get(doc_id = len(analysis_target_table) - 1)

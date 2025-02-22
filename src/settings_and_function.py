@@ -322,6 +322,9 @@ def sorted_insert_or_update_with_time(
     
     return new_records_num
 
+def data_to_analysis_name_trans(data_table_name: str, level: int):
+    return data_table_name + '_lv' + str(level)
+
 
 settings = WaveToolArgs()
 settings.game_path = r"D:\game\鸣潮\Wuthering Waves"
