@@ -1,9 +1,8 @@
 from settings_and_function import settings
 import settings_and_function as SF
 from tinydb import Query, TinyDB
-import json
 from datetime import datetime
-from pprint import pprint
+
 
 '''
 {
@@ -261,9 +260,10 @@ class AnalysisData:
                 return True
         return time_test
 
-
-a = AnalysisData()
-# pprint(a.analysis_gacha_records())
-a.save_analysis_result(a.analysis_gacha_records())
+if __name__ == "__main__":
+    from pprint import pprint
+    a = AnalysisData()
+    # pprint(a.analysis_gacha_records())
+    a.save_analysis_result(a.analysis_gacha_records())
 
 
