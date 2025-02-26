@@ -23,7 +23,7 @@ def path_set(label_name: str, segment_name: str, note: str = '', init_path: str 
     col1, col2 = st.columns([4, 1])
     empty_text = col1.empty()
     empty_text.text_input(
-        label='', 
+        label='1', 
         value=st.session_state[segment_name], 
         label_visibility='collapsed', 
         autocomplete='on',
@@ -35,7 +35,7 @@ def path_set(label_name: str, segment_name: str, note: str = '', init_path: str 
     if dirname_selected:
         st.session_state[segment_name] = dirname_selected
     empty_text.text_input(
-        label='', 
+        label='2', 
         value=st.session_state[segment_name], 
         label_visibility='collapsed', 
         autocomplete='on',
@@ -62,12 +62,12 @@ def gacha_records_show():
                         SF.data_to_analysis_name_trans(gacha_name, level)
                     )
                     df = pd.DataFrame(t.all()[::-1])
+                    df = df.drop('qualityLevel', axis=1)
                     st.dataframe(
                         df, 
                         column_order=[
                             'time',
                             'name',
-                            # 'qualityLevel',
                             'resourceType',
                             'pity_num',
                         ],
@@ -80,7 +80,6 @@ def gacha_records_show():
                                 label='名称',
                                 width="small"
                             ),
-                            # 'qualityLevel': '星级',
                             'resourceType': '类型',
                             'pity_num': '抽数',
                         },
