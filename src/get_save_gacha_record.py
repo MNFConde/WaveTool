@@ -95,6 +95,7 @@ def make_post_url(url_api: str, url_para: dict) -> str:
 
 def get_url_para_from_log() -> dict:
     url_para_str = get_post_url(settings.game_log_path)
+    print("抽卡记录获取地址：{}".format(url_para_str))
     print(url_para_str)
     url_para_dict = {
         'svr_id'       : re.search(r'(?<=svr_id=).*?(?=&)', url_para_str).group(),
