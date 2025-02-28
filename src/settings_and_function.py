@@ -126,7 +126,7 @@ class WaveToolArgs():
         
     @property
     def gacha_db(self):
-        return TinyDB(self.gacha_db_path())
+        return TinyDB(self.gacha_db_path)
     
     @property
     def analysis_db_path(self):
@@ -135,7 +135,7 @@ class WaveToolArgs():
     
     @property
     def analysis_db(self):
-        return TinyDB(self.analysis_db_path())
+        return TinyDB(self.analysis_db_path)
     
     # def is_gacha_time_init(self):
     #     if self.database_time == self.init_args['database_lastest_record_time']:
