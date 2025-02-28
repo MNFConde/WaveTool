@@ -86,6 +86,7 @@ def gacha_records_show():
                         use_container_width=True,
                         hide_index=True
                     )
+                    st.bar_chart(df, x="name", y="pity_num", horizontal=True,x_label="", y_label="",stack='layered')
 
 def data_summary():
     st.markdown("#### 汇总")
