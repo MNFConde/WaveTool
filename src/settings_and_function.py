@@ -120,13 +120,22 @@ class WaveToolArgs():
         return self.database_time
     
     @property
+    def gacha_db_path(self):
+        return os.path.join(self.data_path, 'gacha_database.json')
+        # return os.path.join(self.data_path, 'gacha_database_test.json')
+        
+    @property
     def gacha_db(self):
-        return TinyDB(os.path.join(self.data_path, 'gacha_database.json'))
-        # return TinyDB(os.path.join(self.data_path, 'gacha_database_test.json'))
+        return TinyDB(self.gacha_db_path())
+    
+    @property
+    def analysis_db_path(self):
+        return os.path.join(self.cache_path, 'analysis_cache', 'analysis_result.json')
+        # return os.path.join(self.cache_path, 'analysis_cache', 'analysis_result_test.json')
     
     @property
     def analysis_db(self):
-        return TinyDB(os.path.join(self.cache_path, 'analysis_cache', 'analysis_result.json'))
+        return TinyDB(self.analysis_db_path())
     
     # def is_gacha_time_init(self):
     #     if self.database_time == self.init_args['database_lastest_record_time']:

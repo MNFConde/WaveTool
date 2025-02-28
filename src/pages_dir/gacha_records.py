@@ -5,6 +5,7 @@ import settings_and_function as SF
 import pandas as pd
 import sys
 sys.path.append("..")
+import os
 from get_save_gacha_record import get_save_gacha_main
 from analysis_gacha_record import AnalysisData
 
@@ -148,7 +149,8 @@ def get_gacha_records():
         if st.button("获取记录"):
             get_save_gacha_main()
     with b2:
-        if st.button("分析记录"):
+        if st.button("重新分析记录"):
+            os.remove(settings.analysis_db_path)
             a = AnalysisData()
             a.save_analysis_result(a.analysis_gacha_records())
     with b3:
@@ -156,7 +158,6 @@ def get_gacha_records():
             get_save_gacha_main()
             a = AnalysisData()
             a.save_analysis_result(a.analysis_gacha_records())
-            
 
 st.header("抽卡记录")
 

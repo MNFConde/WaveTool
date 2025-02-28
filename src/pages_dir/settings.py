@@ -39,7 +39,7 @@ def path_set(label_name: str, segment_name: str, note: str = '', init_path: str 
         autocomplete='on',
         key=segment_name + 'input' + 'b',
     )
-    st.write(st.session_state[segment_name])
+    # st.write(st.session_state[segment_name])
 
 st.header("设置")
 st.write("")

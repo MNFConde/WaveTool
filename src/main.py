@@ -12,7 +12,7 @@ pages = {
             title="抽卡数据分析",
             icon=":material/analytics:",
         ),
-    ],
+    ], 
     "设置": [
         st.Page(
             "pages_dir/settings.py", 
