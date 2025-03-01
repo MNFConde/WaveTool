@@ -4,11 +4,22 @@ from settings_and_function import settings
 import settings_and_function as SF
 import pandas as pd
 import sys
+from streamlit_theme import st_theme
 sys.path.append("..")
 import os
 from get_save_gacha_record import get_save_gacha_main
 from analysis_gacha_record import AnalysisData
 
+def theme_color():
+    theme = st_theme(key="aavvb")['base']
+    if theme == "dark":
+        return "#FFFFFF"
+    elif theme == "light":
+        return "#000000"
+    else:
+        return None
+
+global_color = theme_color()
 
 def echart_gacha_record(df):
     options = {
@@ -23,6 +34,7 @@ def echart_gacha_record(df):
                     "textStyle": {
                         "fontWeight": "bolder",
                         "fontSize": 15,
+                        "color": global_color,
                     }
                 } for i in list(df['name'])],
                 "axisLine": {
@@ -38,6 +50,7 @@ def echart_gacha_record(df):
                     "textStyle": {
                         "fontWeight": "bolder",
                         "fontSize": 15,
+                        "color": global_color,
                     }
                 } for i in list(df['pity_num'])],
                 "axisLine": {
@@ -48,7 +61,7 @@ def echart_gacha_record(df):
                 },
             },
         ],
-        
+        "animation": False,
         "tooltip": {
             "show": True,
             "trigger": "item",
@@ -86,12 +99,13 @@ def echart_gacha_record(df):
                 "barGap": '-100%',
                 "data": [
                     {
-                        "value": 100,
+                        "value": 90,
                         "time": df['time'][i],
                         "itemStyle": {
                             "normal": {
                                 "color": "#eee",
                                 "barBorderRadius": 30,
+                                "opacity": 0,
                             },
                         }
                             
@@ -102,7 +116,12 @@ def echart_gacha_record(df):
                 },
                 "emphasis": {
                     "disabled": True,
-                }
+                },
+                "select": {
+                    "disabled": True,
+                },
+                "legendHoverLink": False,
+                
             },
         ]
     }
@@ -122,24 +141,35 @@ def color_from_pity_num(num: int):
 def gacha_record_show():
     st.markdown("#### 数据")
     four = st.checkbox('展示四星')
-    for i in settings.gacha_type.keys():
-        gacha_name = settings.gacha_type[i]
-        if four:
-            levels = (5, 4)
-            level_pages = ['五星', '四星']
-        else:
-            levels = (5, )
-            level_pages = ['五星', ]
-        for i in range(len(levels)):
-            level_page = level_pages[i]
-            st.markdown("##### " + gacha_name + level_page)
-            level = levels[i]
-            t = settings.analysis_db.table(
-                SF.data_to_analysis_name_trans(gacha_name, level)
-            )
-            df = pd.DataFrame(t.all())
-            df = df.drop('qualityLevel', axis=1)
-            echart_gacha_record(df)
+    eql = st.columns(len(settings.gacha_type.keys()), gap="small")
+    button_list = []
+    for i in range(len(settings.gacha_type.keys())):
+        with eql[i]:
+            gacha_name = settings.gacha_type[i + 1]
+            button_list.append(st.button(gacha_name, use_container_width=True))
+    for i in range(len(button_list)):
+        if button_list[i]:
+            break
+        elif i == len(button_list) - 1:
+            i = 0
+    
+    gacha_name = settings.gacha_type[i + 1]
+    if four:
+        levels = (5, 4)
+        level_pages = ['五星', '四星']
+    else:
+        levels = (5, )
+        level_pages = ['五星', ]
+    for i in range(len(levels)):
+        level_page = level_pages[i]
+        st.markdown("##### " + gacha_name + level_page)
+        level = levels[i]
+        t = settings.analysis_db.table(
+            SF.data_to_analysis_name_trans(gacha_name, level)
+        )
+        df = pd.DataFrame(t.all())
+        df = df.drop('qualityLevel', axis=1)
+        echart_gacha_record(df)
             
 
 def get_gacha_records():
