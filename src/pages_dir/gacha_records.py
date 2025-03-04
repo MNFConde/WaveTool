@@ -11,13 +11,15 @@ from get_save_gacha_record import get_save_gacha_main
 from analysis_gacha_record import AnalysisData
 
 def theme_color():
-    theme = st_theme(key="aavvb")['base']
-    if theme == "dark":
-        return "#FFFFFF"
-    elif theme == "light":
-        return "#000000"
-    else:
-        return None
+    theme = st_theme(key="aavvb")
+    if theme:
+        theme = theme['base']
+        if theme == "dark":
+            return "#FFFFFF"
+        elif theme == "light":
+            return "#000000"
+
+    return None
 
 global_color = theme_color()
 
