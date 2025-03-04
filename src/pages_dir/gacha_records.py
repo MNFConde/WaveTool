@@ -9,6 +9,7 @@ sys.path.append("..")
 import os
 from get_save_gacha_record import get_save_gacha_main
 from analysis_gacha_record import AnalysisData
+from streamlit_js_eval import streamlit_js_eval
 
 def theme_color():
     theme = st_theme(key="aavvb")
@@ -22,8 +23,9 @@ def theme_color():
     return None
 
 global_color = theme_color()
-
 def echart_gacha_record(df):
+    page_wide = streamlit_js_eval(js_expressions='Object.values(document.getElementsByClassName("stVerticalBlock")).map((item)=>item.offsetWidth).reduce((item1, item2)=>item1>item2?item1:item2)')
+    print(page_wide)
     options = {
         # "color": [color_from_pity_num(i) for i in df['pity_num']],
         "xAxis": {
@@ -86,10 +88,6 @@ def echart_gacha_record(df):
                         }
                     } for i in range(len(df))
                 ],
-                # "label": {
-                #     "show": True,
-                #     "position": "right",
-                # },  
                 "barWidth": 20,
                 "barCategoryGap": 5,
             },
@@ -129,6 +127,7 @@ def echart_gacha_record(df):
     }
     st_echarts(
         option=options,
+        width=700,
         height=str(len(df) * 40 + 120) + "px",
     )
 
@@ -141,7 +140,7 @@ def color_from_pity_num(num: int):
         return "#30835f"
 
 def gacha_record_show():
-    st.markdown("#### 数据")
+    st.markdown("#### 数据展示")
     four = st.checkbox('展示四星')
     eql = st.columns(len(settings.gacha_type.keys()), gap="small")
     button_list = []
@@ -164,8 +163,8 @@ def gacha_record_show():
         level_pages = ['五星', ]
     for i in range(len(levels)):
         level_page = level_pages[i]
-        st.markdown("##### " + gacha_name + level_page)
         level = levels[i]
+        st.markdown("##### " + gacha_name + level_page)
         t = settings.analysis_db.table(
             SF.data_to_analysis_name_trans(gacha_name, level)
         )
