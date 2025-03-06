@@ -9,7 +9,8 @@ sys.path.append("..")
 import os
 from get_save_gacha_record import get_save_gacha_main
 from analysis_gacha_record import AnalysisData
-from streamlit_js_eval import streamlit_js_eval
+# from streamlit_js_eval import streamlit_js_eval
+from streamlit_dimensions import st_dimensions
 
 def theme_color():
     theme = st_theme(key="aavvb")
@@ -23,9 +24,18 @@ def theme_color():
     return None
 
 global_color = theme_color()
+
+def get_font_size(val, now_width, init_width=700):
+    return val * (now_width // init_width)
+
 def echart_gacha_record(df):
-    page_wide = streamlit_js_eval(js_expressions='Object.values(document.getElementsByClassName("stVerticalBlock")).map((item)=>item.offsetWidth).reduce((item1, item2)=>item1>item2?item1:item2)')
+    # page_wide = streamlit_js_eval(js_expressions='Object.values(document.getElementsByClassName("stVerticalBlock")).map((item)=>item.offsetWidth).reduce((item1, item2)=>item1>item2?item1:item2)')
+    page_wide = st_dimensions(key="main")
     print(page_wide)
+    
+    chart_width = 700 if page_wide is None else page_wide['width']
+    font_size = get_font_size(15, chart_width)
+        
     options = {
         # "color": [color_from_pity_num(i) for i in df['pity_num']],
         "xAxis": {
@@ -37,7 +47,7 @@ def echart_gacha_record(df):
                     "value": i,
                     "textStyle": {
                         "fontWeight": "bolder",
-                        "fontSize": 15,
+                        "fontSize": font_size,
                         "color": global_color,
                     }
                 } for i in list(df['name'])],
@@ -53,7 +63,7 @@ def echart_gacha_record(df):
                     "value": i,
                     "textStyle": {
                         "fontWeight": "bolder",
-                        "fontSize": 15,
+                        "fontSize": font_size,
                         "color": global_color,
                     }
                 } for i in list(df['pity_num'])],
@@ -127,7 +137,7 @@ def echart_gacha_record(df):
     }
     st_echarts(
         option=options,
-        width=700,
+        width=chart_width,
         height=str(len(df) * 40 + 120) + "px",
     )
 
