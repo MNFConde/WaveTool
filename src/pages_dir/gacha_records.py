@@ -31,7 +31,6 @@ def get_font_size(val, now_width, init_width=700):
 def echart_gacha_record(df):
     # page_wide = streamlit_js_eval(js_expressions='Object.values(document.getElementsByClassName("stVerticalBlock")).map((item)=>item.offsetWidth).reduce((item1, item2)=>item1>item2?item1:item2)')
     page_wide = st_dimensions(key="main")
-    print(page_wide)
     
     chart_width = 700 if page_wide is None else page_wide['width']
     font_size = get_font_size(15, chart_width)
@@ -181,7 +180,7 @@ def gacha_record_show():
         df = pd.DataFrame(t.all())
         df = df.drop('qualityLevel', axis=1)
         echart_gacha_record(df)
-            
+
 
 def get_gacha_records():
     st.markdown("#### 获取记录")

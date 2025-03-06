@@ -115,9 +115,9 @@ class WaveToolArgs():
             return True
         return False
     
-    @property
-    def gacha_time(self):
-        return self.database_time
+    # @property
+    # def gacha_time(self):
+    #     return self.database_time
     
     @property
     def gacha_db_path(self):
