@@ -7,11 +7,11 @@ pages = {
             title="抽卡记录", 
             icon=":material/dashboard:",
         ),
-        st.Page(
-            "pages_dir/analysis.py", 
-            title="抽卡数据分析",
-            icon=":material/analytics:",
-        ),
+        # st.Page(
+        #     "pages_dir/analysis.py", 
+        #     title="抽卡数据分析",
+        #     icon=":material/analytics:",
+        # ),
     ], 
     "设置": [
         st.Page(
